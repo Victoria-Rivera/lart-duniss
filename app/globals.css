@@ -1,0 +1,61 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+body {
+  background-color: #fff5f8;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+  background-color: #ffa6ef !important;
+  box-shadow: 0 2px 8px rgba(214, 51, 132, 0.08);
+}
+
+.carousel-item img {
+  height: 380px !important;
+  object-fit: cover;
+}
+
+.card-producto {
+  background-color: #ffffff;
+  border: 1px solid #f8d7da;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  border-radius: 15px;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.card-producto:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(214, 51, 132, 0.12);
+}
+
+.card-title {
+  font-weight: bold;
+  color: #b02a65;
+}
+
+.precio-descuento {
+  color: #adb5bd;
+  font-size: 0.9rem;
+}
+
+.precio-nuevo {
+  color: #d63384;
+  font-size: 1.2rem;
+}
+
+h2 {
+  color: #b02a65;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background-color: #e83e8c !important;
+  border-color: #e83e8c !important;
+}
+
+.btn-primary:hover {
+  background-color: #d63384 !important;
+  border-color: #d63384 !important;
+}
