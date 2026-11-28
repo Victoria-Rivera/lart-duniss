@@ -1,249 +1,186 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ItemCarrito, ProductoTienda } from "../carrito/page";
-
-const categoriasDisponibles = [
-  "Todos",
-  "Galletas",
-  "Cake Popsicles",
-  "Cupcakes",
-] as const;
-
-type CategoriaFiltro = (typeof categoriasDisponibles)[number];
-
-const productosCategoria: ProductoTienda[] = [
-  {
-    id: 1,
-    nombre: "Galletas Chispas Artesanales",
-    categoria: "Galletas",
-    descripcion: "Crujientes, con chispas de chocolate y decoradas a mano.",
-    imagen: "/assets/img/Pasteleria_1.jpg",
-    precio_descuento: 5500,
-    precio_nuevo: 4200,
-    stock: 10,
-  },
-  {
-    id: 2,
-    nombre: "Cake Popsicles Belgas",
-    categoria: "Cake Popsicles",
-    descripcion: "Paletas de pastel cubiertas con chocolate.",
-    imagen: "/assets/img/Pasteleria_2.jpg",
-    precio_descuento: 6000,
-    precio_nuevo: 4800,
-    stock: 8,
-  },
-  {
-    id: 3,
-    nombre: "Cupcakes Vainilla & Queso Crema",
-    categoria: "Cupcakes",
-    descripcion: "Esponjosos pastelitos con frosting artesanal.",
-    imagen: "/assets/img/Pasteleria_3.jpg",
-    precio_descuento: 7000,
-    precio_nuevo: 5500,
-    stock: 12,
-  },
-  {
-    id: 4,
-    nombre: "Galletas Glaseadas Temáticas",
-    categoria: "Galletas",
-    descripcion: "Decoradas a mano para celebraciones especiales.",
-    imagen: "/assets/img/Pasteleria_4.jpg",
-    precio_descuento: 6800,
-    precio_nuevo: 5200,
-    stock: 9,
-  },
-];
+import { obtenerProductos, type ProductoFrontend } from "@/lib/servicios-api";
+import {
+  agregarProductoAlCarrito,
+  type ItemCarrito,
+} from "@/lib/carrito-utils";
 
 export default function CategoriasPage() {
-  const [categoriaActiva, setCategoriaActiva] =
-    useState<CategoriaFiltro>("Todos");
+  const [productos, setProductos] = useState<ProductoFrontend[]>([]);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [mensajeCarrito, setMensajeCarrito] = useState("");
+
+  useEffect(() => {
+    obtenerProductos()
+      .then((data) => setProductos(data))
+      .catch((err) =>
+        setError(
+          err instanceof Error
+            ? err.message
+            : "No se pudieron cargar los productos."
+        )
+      )
+      .finally(() => setCargando(false));
+  }, []);
+
+  const categorias = [
+    "Todas",
+    ...Array.from(new Set(productos.map((p) => p.categoria))),
+  ];
 
   const productosFiltrados =
-    categoriaActiva === "Todos"
-      ? productosCategoria
-      : productosCategoria.filter((p) => p.categoria === categoriaActiva);
+    categoriaSeleccionada === "Todas"
+      ? productos
+      : productos.filter((p) => p.categoria === categoriaSeleccionada);
 
-  const addToCart = (product: ProductoTienda) => {
-    const cart: ItemCarrito[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existing = cart.find((item) => item.id === product.id);
+  const handleAgregar = (producto: ProductoFrontend) => {
+    const carritoGuardado: ItemCarrito[] = JSON.parse(
+      localStorage.getItem("cart") || "[]"
+    );
 
-    if (existing) {
-      if (existing.quantity < product.stock) {
-        existing.quantity += 1;
-      } else {
-        alert(`No hay suficiente stock disponible de ${product.nombre}.`);
-        return;
+    const { carrito, error: errorStock } = agregarProductoAlCarrito(
+      carritoGuardado,
+      {
+        id: producto.id,
+        nombre: producto.nombre,
+        precio_nuevo: producto.precio_nuevo,
+        stock: producto.stock,
       }
-    } else {
-      if (product.stock > 0) {
-        cart.push({ ...product, quantity: 1 });
-      } else {
-        alert(`Lo sentimos, ${product.nombre} está agotado.`);
-        return;
-      }
+    );
+
+    if (errorStock) {
+      setMensajeCarrito(errorStock);
+      return;
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart));
-    alert(`¡Se añadió "${product.nombre}" al carrito! 🛒`);
+    localStorage.setItem("cart", JSON.stringify(carrito));
+    setMensajeCarrito(`"${producto.nombre}" agregado al carrito.`);
+    setTimeout(() => setMensajeCarrito(""), 2500);
   };
 
   return (
     <div style={{ backgroundColor: "#fff5f8", minHeight: "100vh" }}>
-      <nav
-        className="navbar navbar-expand-lg"
-        style={{
-          backgroundColor: "#ffffff",
-          boxShadow: "0 2px 8px rgba(214, 51, 132, 0.08)",
-        }}
-      >
-        <div className="container-fluid">
-          <Link className="navbar-brand d-flex align-items-center" href="/">
-            <img
-              src="/assets/img/Banner.jpg"
-              alt="Logo Lart_duniss"
-              className="d-inline-block align-text-top rounded-circle me-2 object-fit-cover"
-              width={40}
-              height={40}
-            />
-            <strong style={{ color: "#b02a65" }}>Lart_duniss</strong>
-          </Link>
-
-          <div className="collapse navbar-collapse justify-content-center" id="navbarTopContent">
-            <form className="d-flex" role="search" onSubmit={(e) => e.preventDefault()}>
-              <input
-                className="form-control me-2"
-                type="search"
-                placeholder="Buscar delicias..."
-                aria-label="Buscar"
-              />
-              <button className="btn btn-outline-danger" type="submit">
-                Buscar
-              </button>
-            </form>
-          </div>
-
-          <div className="d-flex align-items-center">
-            <Link href="/iniciar-sesion" className="btn btn-outline-danger ms-2">
-              Iniciar Sesión
-            </Link>
-            <Link
-              href="/crear-sesion"
-              className="btn btn-danger ms-2"
-              style={{ backgroundColor: "#e83e8c", borderColor: "#e83e8c" }}
-            >
-              Crear Cuenta
-            </Link>
-            <Link href="/carrito" className="btn btn-success ms-3">
-              <i className="bi bi-cart4"></i>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container my-5">
-        <div className="text-center mb-5">
-          <h2 className="fw-bold" style={{ color: "#b02a65" }}>
-            Explora Nuestras Categorías
+      <div className="container py-5">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="fw-bold mb-0" style={{ color: "#b02a65" }}>
+            Catálogo de Repostería
           </h2>
-          <p className="text-muted">Filtra por tu tipo de repostería favorita</p>
+          <Link href="/carrito" className="btn btn-success fw-bold">
+            Ir al Carrito
+          </Link>
+        </div>
 
-          <div className="btn-group mt-3" role="group">
-            {categoriasDisponibles.map((cat) => {
-              const activa = categoriaActiva === cat;
-              return (
+        {mensajeCarrito && (
+          <div className="alert alert-info py-2">{mensajeCarrito}</div>
+        )}
+
+        {cargando && (
+          <p className="text-center fw-semibold" style={{ color: "#b02a65" }}>
+            Cargando productos desde el backend...
+          </p>
+        )}
+
+        {error && (
+          <div className="alert alert-danger">
+            <p className="mb-2">{error}</p>
+            <Link href="/iniciar-sesion" className="btn btn-sm btn-outline-danger">
+              Iniciar Sesión para obtener token
+            </Link>
+          </div>
+        )}
+
+        {!cargando && !error && (
+          <>
+            {/* Filtro de categorías */}
+            <div className="d-flex flex-wrap gap-2 mb-4">
+              {categorias.map((cat) => (
                 <button
                   key={cat}
                   type="button"
-                  className="btn"
-                  style={{
-                    borderColor: "#e83e8c",
-                    backgroundColor: activa ? "#e83e8c" : "transparent",
-                    color: activa ? "#ffffff" : "#e83e8c",
-                  }}
-                  onClick={() => setCategoriaActiva(cat)}
+                  onClick={() => setCategoriaSeleccionada(cat)}
+                  className={`btn btn-sm ${
+                    categoriaSeleccionada === cat
+                      ? "btn-danger"
+                      : "btn-outline-danger"
+                  }`}
                 >
-                  {cat === "Todos" ? "Todas" : cat}
+                  {cat}
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="row row-cols-1 row-cols-md-4 g-4" id="category-product-list">
-          {productosFiltrados.length === 0 ? (
-            <div className="col-12 text-center text-muted py-4">
-              No hay productos en esta categoría por el momento.
+              ))}
             </div>
-          ) : (
-            productosFiltrados.map((item) => (
-              <div className="col" key={item.id}>
-                <div
-                  className="card h-100 p-2"
-                  style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #f8d7da",
-                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.04)",
-                    borderRadius: "15px",
-                  }}
-                >
-                  <img
-                    src={item.imagen}
-                    className="card-img-top rounded"
-                    alt={item.nombre}
-                    style={{ height: "180px", objectFit: "cover" }}
-                  />
-                  <div className="card-body d-flex flex-column justify-content-between">
-                    <div>
-                      <span className="badge bg-light text-dark mb-2">
-                        {item.categoria}
-                      </span>
-                      <h5
-                        className="card-title fs-6 fw-bold"
-                        style={{ color: "#b02a65" }}
-                      >
-                        {item.nombre}
-                      </h5>
-                      <p className="text-muted small mb-2">{item.descripcion}</p>
-                    </div>
-                    <div>
-                      <div className="d-flex flex-column mb-3">
-                        <span
-                          className="text-decoration-line-through"
-                          style={{ color: "#adb5bd", fontSize: "0.9rem" }}
-                        >
-                          ${item.precio_descuento.toLocaleString("es-CL")}
+
+            {/* Grilla de productos */}
+            <div className="row g-4">
+              {productosFiltrados.map((producto) => (
+                <div className="col-md-4" key={producto.id}>
+                  <div
+                    className="card h-100 shadow-sm border-0"
+                    style={{ borderRadius: "15px" }}
+                  >
+                    <img
+                      src={producto.imagen}
+                      alt={producto.nombre}
+                      className="card-img-top"
+                      style={{
+                        height: "200px",
+                        objectFit: "cover",
+                        borderTopLeftRadius: "15px",
+                        borderTopRightRadius: "15px",
+                      }}
+                    />
+                    <div className="card-body d-flex flex-column justify-content-between">
+                      <div>
+                        <span className="badge bg-light text-dark mb-2">
+                          {producto.categoria}
                         </span>
-                        <span
-                          className="fw-bolder"
-                          style={{ color: "#d63384", fontSize: "1.2rem" }}
-                        >
-                          ${item.precio_nuevo.toLocaleString("es-CL")}
-                        </span>
+                        <h5 className="fw-bold" style={{ color: "#b02a65" }}>
+                          {producto.nombre}
+                        </h5>
+                        <p className="text-secondary small">
+                          {producto.descripcion}
+                        </p>
                       </div>
-                      <div className="d-grid gap-2">
-                        <Link
-                          href="/productos/producto1"
-                          className="btn btn-sm btn-outline-danger"
+
+                      <div>
+                        <div
+                          className="fs-5 fw-bold mb-2"
+                          style={{ color: "#d63384" }}
                         >
-                          Ver Detalle
-                        </Link>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-success"
-                          onClick={() => addToCart(item)}
-                        >
-                          <i className="bi bi-cart-plus"></i> Añadir
-                        </button>
+                          ${producto.precio_nuevo.toLocaleString("es-CL")}
+                        </div>
+                        <div className="d-flex gap-2">
+                          <Link
+                            href={`/productos/${producto.id}`}
+                            className="btn btn-outline-secondary btn-sm flex-fill"
+                          >
+                            Ver detalle
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleAgregar(producto)}
+                            disabled={producto.stock <= 0}
+                            className="btn btn-danger btn-sm flex-fill"
+                            style={{
+                              backgroundColor: "#e83e8c",
+                              borderColor: "#e83e8c",
+                            }}
+                          >
+                            {producto.stock > 0 ? "Añadir" : "Agotado"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,222 +1,129 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api-client";
 
-export default function Contacto() {
+export default function ContactoPage() {
   const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [enviado, setEnviado] = useState(false);
+  const [comentario, setComentario] = useState("");
+  const [calificacion, setCalificacion] = useState(5);
+  const [enviando, setEnviando] = useState(false);
+  const [mensajeOk, setMensajeOk] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !email.trim() || !mensaje.trim()) {
-      alert("Por favor completa tu nombre, correo y mensaje.");
-      return;
-    }
+    setError("");
+    setMensajeOk("");
+    setEnviando(true);
 
-    setEnviado(true);
-    setNombre("");
-    setEmail("");
-    setMensaje("");
+    try {
+      await apiFetch("/api/v1/opiniones", {
+        method: "POST",
+        body: JSON.stringify({
+          autor: nombre,
+          comentario,
+          calificacion,
+        }),
+      });
+      setMensajeOk("¡Gracias por escribirnos! Tu mensaje fue enviado.");
+      setNombre("");
+      setComentario("");
+      setCalificacion(5);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo enviar el mensaje. Asegúrate de haber iniciado sesión."
+      );
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
-    <div style={{ backgroundColor: "#ffa6ef", minHeight: "100vh" }}>
-      {/* Navbar Superior */}
-      <nav className="navbar navbar-expand-lg bg-body-tertiary shadow-sm">
-        <div className="container-fluid">
-          <Link className="navbar-brand d-flex align-items-center" href="/">
-            <img
-              src="/assets/img/Banner.jpg"
-              alt="Logo Lart_duniss"
-              width={40}
-              height={40}
-              className="me-2 rounded-circle object-fit-cover"
-            />
-            <strong>Lart_duniss</strong>
-          </Link>
+    <div
+      style={{ backgroundColor: "#fff5f8", minHeight: "100vh" }}
+      className="py-5"
+    >
+      <div className="container" style={{ maxWidth: "600px" }}>
+        <div
+          className="card p-4 shadow-sm border-0"
+          style={{ borderRadius: "15px" }}
+        >
+          <h2 className="fw-bold mb-3" style={{ color: "#b02a65" }}>
+            Contacto y Opiniones
+          </h2>
+          <p className="text-secondary small mb-4">
+            Cuéntanos cómo fue tu experiencia con Lart_duniss o déjanos un
+            mensaje.
+          </p>
 
-          <div
-            className="collapse navbar-collapse justify-content-center"
-            id="navbarTopContent"
-          >
-            <form className="d-flex" role="search" onSubmit={(e) => e.preventDefault()}>
-              <input
-                className="form-control me-2"
-                type="search"
-                placeholder="Buscar..."
-                aria-label="Buscar"
-              />
-              <button className="btn btn-outline-success" type="submit">
-                Buscar
-              </button>
-            </form>
-          </div>
-
-          <div className="d-flex">
-            <Link href="/iniciar-sesion" className="btn btn-outline-primary ms-2">
-              Iniciar Sesión
-            </Link>
-            <Link href="/crear-sesion" className="btn btn-primary ms-2">
-              Crear Cuenta
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Navbar Inferior */}
-      <nav className="navbar navbar-expand-lg bg-body-tertiary d-none d-lg-block border-top border-bottom">
-        <div className="container-fluid">
-          <div
-            className="collapse navbar-collapse justify-content-center"
-            id="navbarBottomContent"
-          >
-            <ul className="navbar-nav align-items-center">
-              <li className="nav-item">
-                <Link className="nav-link" href="/">
-                  Home
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" href="/categorias">
-                  Categorías
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" href="/ofertas">
-                  Ofertas
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" href="/nosotros">
-                  Nosotros
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" href="/blog">
-                  Blog
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link active text-success" href="/contacto">
-                  <strong>Contacto</strong>
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" href="/pedidos-especiales">
-                  Pedidos especiales
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="btn btn-success ms-4" href="/carrito">
-                  <strong>
-                    <i className="bi bi-cart4"></i> Carrito{" "}
-                    <span>
-                      <strong>$5.000</strong>
-                    </span>
-                  </strong>
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      {/* Formulario de Contacto */}
-      <div className="row justify-content-center my-5 mx-2">
-        <div className="col-md-8">
-          <div
-            className="card p-4"
-            style={{
-              border: "none",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-              borderRadius: "12px",
-            }}
-          >
-            <div className="card-body">
-              <h2 className="text-center mb-3 fw-bold">💌 Contáctanos</h2>
-              <p className="text-center text-muted mb-4">
-                ¿Tienes dudas sobre un pedido personalizado? Escríbenos.
-              </p>
-
-              {enviado && (
-                <div className="alert alert-success text-center" role="alert">
-                  ¡Mensaje enviado! Te responderemos pronto.
-                </div>
-              )}
-
-              <div className="row justify-content-center">
-                <div className="col-md-10">
-                  <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                      <label htmlFor="nombre" className="form-label">
-                        Nombre
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="nombre"
-                        placeholder="Tu nombre"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="email" className="form-label">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        id="email"
-                        placeholder="Tu correo electrónico"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="mensaje" className="form-label">
-                        Mensaje
-                      </label>
-                      <textarea
-                        className="form-control"
-                        id="mensaje"
-                        rows={4}
-                        placeholder="Cuéntanos los detalles de tus dulces o diseño deseado..."
-                        value={mensaje}
-                        onChange={(e) => setMensaje(e.target.value)}
-                      />
-                    </div>
-                    <div className="text-end">
-                      <button type="submit" className="btn btn-primary px-4">
-                        Enviar Mensaje
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+          {mensajeOk && (
+            <div className="alert alert-success py-2">{mensajeOk}</div>
+          )}
+          {error && (
+            <div className="alert alert-danger py-2">
+              <div>{error}</div>
+              <Link
+                href="/iniciar-sesion"
+                className="btn btn-sm btn-outline-danger mt-2"
+              >
+                Ir a Iniciar Sesión
+              </Link>
             </div>
-          </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label fw-semibold">Tu Nombre</label>
+              <input
+                type="text"
+                className="form-control"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label fw-semibold">Calificación</label>
+              <select
+                className="form-select"
+                value={calificacion}
+                onChange={(e) => setCalificacion(Number(e.target.value))}
+              >
+                <option value={5}>5 - Excelente</option>
+                <option value={4}>4 - Muy bueno</option>
+                <option value={3}>3 - Bueno</option>
+                <option value={2}>2 - Regular</option>
+                <option value={1}>1 - Malo</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label fw-semibold">Mensaje / Opinión</label>
+              <textarea
+                rows={4}
+                className="form-control"
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={enviando}
+              className="btn btn-danger w-100 fw-bold"
+              style={{ backgroundColor: "#e83e8c", borderColor: "#e83e8c" }}
+            >
+              {enviando ? "Enviando..." : "Enviar Mensaje"}
+            </button>
+          </form>
         </div>
       </div>
-
-      {/* Footer con Mapa */}
-      <footer className="bg-dark text-light text-center py-4">
-        <div className="container-fluid mb-3">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d795.8652023171296!2d-70.6151711566251!3d-33.4328796238235!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c586497835ad%3A0xa929ba68e1ac6051!2sDuoc%20UC%20Casa%20Central!5e1!3m2!1ses!2scl!4v1722850059541!5m2!1ses!2scl"
-            width="100%"
-            height="250px"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-        <p className="mb-0">&copy; 2026 Lart_duniss - Repostería Artesanal</p>
-      </footer>
     </div>
   );
 }
