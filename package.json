@@ -2,16 +2,15 @@
   "name": "lart-duniss",
   "version": "0.1.0",
   "private": true,
-  
   "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint",
-  "test": "vitest run",
-  "test:watch": "vitest",
-  "test:coverage": "vitest run --coverage"
-},
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
   "dependencies": {
     "bootstrap": "^5.3.9",
     "bootstrap-icons": "^1.13.2",
@@ -34,6 +33,7 @@
     "jsdom": "^31.0.1",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
+    "vite": "^8.4.0",
     "vitest": "^5.1.1"
   }
 }

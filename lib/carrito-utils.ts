@@ -1,20 +1,22 @@
-// lib/carrito-utils.ts
-export interface ItemCarritoBase {
+export interface ProductoCarritoInput {
   id: number;
   nombre: string;
   precio_nuevo: number;
   stock: number;
+}
+
+export interface ItemCarrito extends ProductoCarritoInput {
   quantity: number;
 }
 
-export function calcularTotalCarrito(items: ItemCarritoBase[]): number {
+export function calcularTotalCarrito(items: ItemCarrito[]): number {
   return items.reduce((acc, item) => acc + item.precio_nuevo * item.quantity, 0);
 }
 
-export function agregarProductoAlCarrito<T extends ItemCarritoBase>(
-  carritoActual: T[],
-  productoNuevo: Omit<T, "quantity">
-): { carrito: T[]; error?: string } {
+export function agregarProductoAlCarrito(
+  carritoActual: ItemCarrito[],
+  productoNuevo: ProductoCarritoInput
+): { carrito: ItemCarrito[]; error?: string } {
   if (productoNuevo.stock <= 0) {
     return {
       carrito: carritoActual,
@@ -40,6 +42,6 @@ export function agregarProductoAlCarrito<T extends ItemCarritoBase>(
   }
 
   return {
-    carrito: [...carritoActual, { ...productoNuevo, quantity: 1 } as T],
+    carrito: [...carritoActual, { ...productoNuevo, quantity: 1 }],
   };
 }
